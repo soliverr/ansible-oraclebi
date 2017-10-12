@@ -1,0 +1,14 @@
+{{ ansible_managed | comment }}
+
+#
+# Set up domain environment along with setDomainEnv.sh
+#
+DOMAIN_HOME={{ oracle_bi_bea_home }}/user_projects/domains/{{ oracle_bi_domain }}
+#
+MW_HOME={{ oracle_bi_bea_home }}
+#
+#JAVA_HOME=
+#
+BI_USER={{ oracle_bi_user }}
+BI_GROUP={{ oracle_bi_group }}
+

@@ -1,0 +1,21 @@
+---
+#
+- name: Prepare configuration for silent mode installation
+  tags:
+    - oracle-bi
+  template:
+    src: "{{ oracle_bi_response_template }}"
+    dest: "{{ oracle_bi_response_file }}"
+
+- set_fact:
+    _bi_install: "{{ oracle_bi_home }}/bin/config.sh {{ oracle_bi_installer_options }} -silent -responseFile {{ oracle_bi_response_file }} -invPtrLoc {{ oracle_bi_inventory_loc }} -printtime"
+  when: oracle_bi_version == "12c"
+  tags:
+    - oracle-bi
+
+- name: Install Oracle BI {{ oracle_bi_version }} in silent mode
+  tags:
+    - oracle-bi
+  shell: "{{ _bi_install  }}"
+  args:
+    creates: "{{ oracle_bi_home }}"

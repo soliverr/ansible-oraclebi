@@ -1,0 +1,19 @@
+---
+#
+- name: Create configuration for ldconfig
+  tags:
+    - oracle-bi
+  template:
+    src: ld.so.conf.j2
+    dest: "/etc/ld.so.conf.d/oracle-bi-{{ oracle_bi_version }}.conf"
+    owner: "{{ oracle_bi_user }}"
+    group: "{{ oracle_bi_group }}"
+    mode: 0644
+  register: _obi_ld_so_conf
+
+- name: Update ldconfig caches
+  tags:
+    - oracle-bi
+  become: true
+  command: ldconfig
+  when: _obi_ld_so_conf.changed

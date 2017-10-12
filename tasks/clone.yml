@@ -1,0 +1,26 @@
+---
+# main_node: /opt/oracle/oraclefmw/user_projects/domains/gasu_open_domain/config/fmwconfig/bienv/core/bi-environment.xml
+# <!--<bi:singleton-data-directory>$DOMAIN_HOME/bidata</bi:singleton-data-directory>-->
+#   <bi:singleton-data-directory>/mnt/gasu_open_domain/bidata</bi:singleton-data-directory>
+
+# main_node: /opt/oracle/oraclefmw/user_projects/domains/gasu_open_domain/config/fmwconfig/biconfig/OBIS/NQSConfig.INI
+# # Cluster-aware cache.
+# Note that since this is a network share, the directory should not be 
+# relative.
+# GLOBAL_CACHE_STORAGE_PATH = "/mnt/gasu_open_domain/bicache" 1024 MB;  # This Configuration setting is managed by Oracle Enterprise Manager Fusion Middleware Control
+# MAX_GLOBAL_CACHE_ENTRIES = 1000;
+# CACHE_POLL_SECONDS = 300;
+# CLUSTER_AWARE_CACHE_LOGGING = NO;
+
+# main_node: cp -apr /opt/oracle/oraclefmw/user_projects/domains/gasu_open_domain/bidata/* /mnt/gasu_open_domain/bidata/
+
+# main_node: /opt/oracle/oraclefmw/user_projects/domains/gasu_open_domain/bitools/bin/clone_bi_machine.sh -m gasu-open02.lxd 10.191.128.31 /mnt/gasu_open_domain/bicache/bi_gasu_open_domain.jar
+
+# slave_node: /opt/oracle/oraclefmw/oracle_common/common/bin/unpack.sh -domain=/opt/oracle/oraclefmw/user_projects/domains/gasu_open_domain -template=/mnt/gasu_open_domain/bicache/bi_gasu_open_domain.jar
+
+# main_node: ???
+# DOMAIN_HOME=/opt/oracle/oraclefmw/user_projects/domains/gasu_open_domain /opt/oracle/oraclefmw/bi/modules/oracle.bi.sysman/scripts/sync_midtier_db.sh
+
+# slave_node: start NodeManager
+
+# main_node: start BI

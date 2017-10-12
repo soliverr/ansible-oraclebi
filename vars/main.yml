@@ -1,0 +1,26 @@
+---
+# vars file for ansible-oraclebi
+
+# Supported versions of Oracle WebLogic
+oracle_bi_supported_versions:
+  - 12c
+  - 11g
+
+# Supported deistributions' families
+oracle_bi_supported_os_families:
+  - RedHat
+
+# Run installer with this options
+oracle_bi_java_options: "-Xmx1024m -Djava.security.egd=file:/dev/./urandom"
+oracle_bi_installer_options: "-ignoreSysPrereqs"
+
+# Sysconfig dir
+oracle_bi_sysconfig_dir: /etc/sysconfig
+oracle_bi_service_dir: /etc/init.d
+
+# Store fact about Oracle BI existence
+oracle_bi_already_installed: false
+oracle_bi_already_configured: false
+
+# Java binary
+oracle_bi_java: "{{ ansible_local.java.general.java_home|default('/usr') }}/bin/java"

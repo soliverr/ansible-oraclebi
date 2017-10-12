@@ -1,0 +1,136 @@
+#!/bin/sh
+#
+# chkconfig:   345 85 15
+# description: per domain Oracle BI 12c service init script
+ 
+### BEGIN INIT INFO
+# Provides: {{ oracle_bi_domain }}-bi
+# Required-Start: $network $local_fs
+# Required-Stop:
+# Should-Start:
+# Should-Stop:
+# Default-Start: 3 4 5
+# Default-Stop: 0 1 2 6
+# Short-Description: per domain Oracle BI services.
+# Description: Starts and stops per domain all required Oracle BI services.
+### END INIT INFO
+
+{{ ansible_managed | comment }}
+
+#. /etc/rc.d/init.d/functions
+
+# Get domain specific config file
+if [ -r "{{ oracle_bi_sysconfig_dir }}/bi-{{ oracle_bi_domain|replace( '_', '-') }}" ]; then
+    . {{ oracle_bi_sysconfig_dir }}/bi-{{ oracle_bi_domain|replace( '_', '-') }}
+fi
+
+# Define default DOMAIN_HOME
+DOMAIN_HOME="${DOMAIN_HOME:-{{ oracle_bi_bea_home }}/user_projects/domains/{{ oracle_bi_domain }}}"
+
+PROGRAM_START="$DOMAIN_HOME/bitools/bin/start.sh"
+PROGRAM_STOP="$DOMAIN_HOME/bitools/bin/stop.sh"
+PROGRAM_STATUS="$DOMAIN_HOME/bitools/bin/status.sh"
+
+LOCKFILE="$DOMAIN_HOME/bilogs/bi.lck"
+OUT_FILE="$DOMAIN_HOME/bilogs/bi.out"
+
+SERVICE_NAME="Oracle BI 12c services for {{ oracle_bi_domain }}"
+
+# Define WebLogic user
+BI_USER="${BI_USER:-{{ oracle_bi_user }}}"
+BI_GROUP="${BI_GROUP:-{{ oracle_bi_group }}}"
+
+RETVAL="0"
+
+# For SELinux we need to use 'runuser' not 'su'
+if [ -x "/sbin/runuser" ]; then
+    SU="/sbin/runuser -s /bin/sh - $BI_USER"
+else
+    SU="/bin/su -s /bin/sh - $BI_USER"
+fi
+
+[ "$(id -nu 2>/dev/null)" = "$BI_USER" ] && SU="/bin/sh"
+
+start() {
+        echo -n $"Starting $SERVICE_NAME ... "
+        echo "`date` Starting $SERVICE_NAME ... " >> $OUT_FILE 2>&1
+
+        nl=`wc -l $OUT_FILE`
+        $SU -c $PROGRAM_START 2>&1 | tee -a $OUT_FILE
+
+        RETVAL=$?
+        #if [ $RETVAL -eq 0 ] ; then
+        #  wait_for "socket listener started on port" $nl
+        #else
+        #  echo "FAILED: $RETVAL. Please check $OUT_FILE for more information."
+        #fi
+
+        touch $LOCKFILE && chown $WL_USER:$WL_GROUP $LOCKFILE
+
+        echo
+}
+
+wait_for() {
+    res=$(tail -n +${2:-0} "$OUT_FILE" | fgrep -c "$1")
+    count=60
+    while [[ ! $res -gt 0 ]] && [[ $count -gt 0 ]]
+    do
+        sleep 1
+        count=$(($count - 1))
+        res=$(tail -n +${2:-0} "$OUT_FILE" | fgrep -c "$1")
+    done
+    res=$(tail -n +${2:-0} "$OUT_FILE" | fgrep -c "$1")
+    if [ ! $res -gt 0 ]; then
+        echo "FAILED or took too long time to start. Please check $OUT_FILE for more information."
+    else
+        echo "OK"
+        touch $LOCKFILE && chown $WL_USER:$WL_GROUP $LOCKFILE
+    fi
+}
+
+stop() {
+        echo -n $"Stopping $SERVICE_NAME ... "
+
+        $SU -c $PROGRAM_STOP 2>&1 | tee -a $OUT_FILE
+
+        rm $LOCKFILE
+
+        echo
+}
+
+status() {
+        echo -n $"Getting status of $SERVICE_NAME ... "
+
+        $SU -c $PROGRAM_STATUS -v 2>&1 | tee -a $OUT_FILE
+
+        echo
+}
+
+restart() {
+        stop
+        sleep 10
+        start
+}
+
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  restart|force-reload|reload)
+        restart
+        ;;
+  condrestart|try-restart)
+        [ -f $LOCKFILE ] && restart
+        ;;
+  status)
+        status
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart}"
+        exit 1
+esac
+
+exit $RETVAL

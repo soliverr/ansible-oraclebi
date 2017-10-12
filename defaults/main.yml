@@ -1,0 +1,59 @@
+---
+# defaults for ansible-oraclebi
+
+# Default system' user and group for install software
+oracle_bi_user: oracle
+oracle_bi_group: oinstall
+
+# Default Oracle Weblogic Version to install
+oracle_bi_version: 12c
+
+# Default install Essbase
+oracle_bi_configure_essbase: true
+
+# Default Temporary directory
+oracle_bi_tmp: /tmp/bi
+
+# Default Oracle Inventory directory
+oracle_bi_inventory_directory: /etc/oracle/Inventory
+
+# Default system-wide Oracle Inventory Locator
+oracle_bi_inventory_loc: /etc/oraInst.loc
+
+# Default BEAHOME to install Oracle BI (AKA Middleware Home)
+oracle_bi_bea_home: /opt/oracle/oraclefmw
+
+# Default installers' build-in location for WebLogic server Home
+oracle_bi_wls_home: "{{ oracle_bi_bea_home }}/wlserver"
+
+# Default ORACLE_HOME for Oracle BI
+oracle_bi_home: "{{ oracle_bi_bea_home }}/bi"
+
+# Default installation type
+#  -  BI Platform Distribution
+#  -  BI Platform Distribution with Samples
+oracle_bi_install_type: "BI Platform Distribution"
+
+# Perform or not configure tasks
+oracle_bi_install_only: false
+
+# Create system startup script
+oracle_bi_sysinit: true
+
+# Default port range. Start port is AdminServer port
+oracle_bi_port_start: 9500
+oracle_bi_port_end: 9999
+
+# Default for NodeManager port
+oracle_bi_nodemanager_port: 9506
+
+# Defaults for creating domain
+oracle_bi_admin_name: weblogic
+oracle_bi_admin_password: manager1
+
+# Default values for RCU utility
+oracle_bi_db_connect: "{{ oracle_rcu_db_connect | default( omit ) }}"
+oracle_bi_db_user: "{{ oracle_rcu_db_user | default( 'sys' ) }}"
+oracle_bi_db_password: "{{ oracle_rcu_db_password | default( omit ) }}"
+oracle_bi_schema_prefix: "{{ oracle_rcu_schema_prefix | default( 'DEV' ) }}"
+oracle_bi_schema_password: "{{ oracle_rcu_schema_password | default( oracle_bi_admin_password ) }}"

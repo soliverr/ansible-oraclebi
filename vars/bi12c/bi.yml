@@ -1,0 +1,21 @@
+---
+# vars file for ansible-oraclebi Oracle BI  12c
+
+# Distribution archive should be downloaded from Oracle
+oracle_bi_archives:
+ - fmw_12.2.1.3.0_bi_linux64_Disk1_1of2.zip
+ - fmw_12.2.1.3.0_bi_linux64_Disk1_2of2.zip
+
+# Configuration for silent installation mode
+oracle_bi_response_template: "{{ role_path }}/templates/bi12c/install.rsp.j2"
+oracle_bi_response_file: "{{ oracle_bi_tmp }}/silent.rsp"
+
+# Configuration for silent configuration mode
+oracle_bi_config_response_template: "{{ role_path }}/templates/bi12c/configure.rsp.j2"
+oracle_bi_config_response_file: "{{ oracle_bi_tmp }}/configure.rsp"
+
+# Installer programm name
+oracle_bi_installer: bi_platform-12.2.1.3.0_linux64.bin
+
+# Default installers' build-in location for WebLogic server Home
+oracle_bi_wls_home: "{{ oracle_bi_bea_home }}/wlserver"

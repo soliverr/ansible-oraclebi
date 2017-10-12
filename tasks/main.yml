@@ -1,0 +1,104 @@
+---
+# tasks file for ansible-weblogic
+
+- set_fact:
+    _bi_dir: "bi{{ oracle_bi_version }}"
+  tags:
+    - oracle-bi
+
+- name: Include Oracle BI version specific vars
+  tags:
+    - oracle-bi
+  include_vars: "{{ _bi_dir }}/bi.yml"
+
+- include: validate.yml
+  tags:
+    - oracle-bi
+  when: not oracle_bi_already_installed
+
+- include: prepare.yml
+  tags:
+    - oracle-bi
+  become: yes
+  when: not oracle_bi_already_installed
+
+#
+# Installation process
+#
+- name: Create Oracle Middleware directory
+  tags:
+    - oracle-bi
+  file:
+    path: "{{ oracle_bi_bea_home }}"
+    state: directory
+    owner: "{{ oracle_bi_user }}"
+    group: "{{ oracle_bi_group }}"
+    mode: 0775
+
+- name: Install Fussion Middleware Infrastructure
+  tags:
+    - oracle-bi
+  include_role:
+    name: ansible-weblogic
+  vars:
+    oracle_weblogic_version: "{{ oracle_bi_version }}"
+    oracle_weblogic_install_type: 'Fusion Middleware Infrastructure'
+    oracle_weblogic_bea_home: "{{ oracle_bi_bea_home }}"
+
+- include: install.yml
+  tags:
+    - oracle-bi
+  static: yes
+  become: yes
+  become_user: "{{ oracle_bi_user }}"
+  when: not oracle_bi_already_installed
+
+#
+# Fix-ups
+#
+# Fix group
+- name: Fix-up user and group for Oracle Middleware directory
+  tags:
+    - oracle-bi
+  file:
+    path: "{{ oracle_bi_home }}"
+    state: directory
+    owner: "{{ oracle_bi_user }}"
+    group: "{{ oracle_bi_group }}"
+    recurse: yes
+
+- set_fact:
+    oracle_bi_already_installed: true
+  tags:
+    - oracle-bi
+
+- include: ldconfig.yml
+  tags:
+    - oracle-bi
+  static: yes
+  become: yes
+  when: oracle_bi_already_installed
+
+#
+# Configure Oracle BI
+#
+- include: configure.yml
+  tags:
+    - oracle-bi
+    - oracle-bi-domain
+  static: yes
+  become: yes
+  become_user: "{{ oracle_bi_user }}"
+  when: oracle_bi_already_installed and oracle_bi_domain is defined and not oracle_bi_already_configured and not oracle_bi_install_only
+
+
+
+#
+# Set up start up system script for domains
+#
+- include: system-services.yml
+  tags:
+    - oracle-bi
+    - oracle-bi-domain
+  static: yes
+  when: oracle_bi_already_installed and oracle_bi_sysinit

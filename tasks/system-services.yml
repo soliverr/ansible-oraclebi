@@ -1,0 +1,46 @@
+---
+# Deploy system services to start Oracle WebLogic server
+
+- name: Install Oracle BI sysvinit environment files
+  tags:
+    - oracle-bi
+    - weblogic-domain
+  become: true
+  when: oracle_bi_already_installed and oracle_bi_sysinit
+  template:
+    src: service-envfile.j2
+    dest: "{{ oracle_bi_sysconfig_dir }}/bi-{{ oracle_bi_domain|replace( '_', '-') }}"
+    backup: yes
+    owner: "{{ oracle_bi_user }}"
+    group: "{{ oracle_bi_group }}"
+    mode: 0644
+
+- name: Remove Oracle BI sysvinit environment files
+  tags:
+    - oracle-bi
+  when: oracle_bi_already_installed and not oracle_bi_sysinit
+  file:
+    path: "{{ oracle_bi_sysconfig_dir }}/bi-{{ oracle_bi_domain|replace( '_', '-') }}"
+    state: absent
+
+- name: Install Oracle BI startup script
+  tags:
+    - oracle-bi
+  become: true
+  when: oracle_bi_already_installed and oracle_bi_sysinit
+  template:
+    src: "{{ _bi_dir }}/bi-sysvinit.j2"
+    dest: "{{ oracle_bi_service_dir }}/{{ oracle_bi_domain|replace( '_', '-') }}-bi"
+    backup: yes
+    owner: 0
+    group: 0
+    mode: 0755
+
+- name: Remove Oracle BI startup script
+  tags:
+    - oracle-bi
+  become: true
+  when: oracle_bi_already_installed and not oracle_bi_sysinit
+  file:
+    path: "{{ oracle_bi_service_dir }}/{{ oracle_bi_domain|replace( '_', '-') }}-bi"
+    state: absent

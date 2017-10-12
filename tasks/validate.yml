@@ -1,0 +1,30 @@
+- name: Assert Oracle BI supported versions
+  assert:
+    that:
+      - ansible_os_family in oracle_bi_supported_os_families
+      - oracle_bi_version in oracle_bi_supported_versions
+
+- name: Check if Oracle BI is already installed
+  stat: path="{{ oracle_bi_home }}"
+  register: _obi_home
+
+- debug:
+    msg: "Oracle BI is already installed in this '{{ oracle_bi_home }}'"
+  when: _obi_home.stat.exists
+
+- name: Check whether Oracle BI domains already configured
+  when: oracle_bi_domain is defined
+  stat: path="{{ oracle_bi_bea_home }}/user_projects/domains/{{ oracle_bi_domain }}/servers/AdminServer/data/ldap/DefaultAuthenticatormyrealmInit.initialized"
+  register: _obi_domain
+
+- debug:
+    msg: "Oracle BI is already configured in '{{ oracle_bi_bea_home }}/user_projects/domains/{{ oracle_bi_domain }}'"
+  when: _obi_domain.stat.exists
+
+- set_fact:
+    oracle_bi_already_configured: true
+  when: _obi_domain.stat.exists
+
+- set_fact:
+    oracle_bi_already_installed: true
+  when: _obi_home.stat.exists

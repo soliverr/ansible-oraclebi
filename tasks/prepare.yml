@@ -1,0 +1,100 @@
+---
+# prepare operating system to the installation
+- name: Install required packages
+  tags:
+    - oracle-bi
+    - packages
+  include_role:
+    name: packages
+  vars:
+    packages_add:
+      - binutils
+      - compat-libcap1
+      - compat-libstdc++-33
+      - libgcc
+      - libstdc++
+      - libstdc++-devel
+      - sysstat
+      - gcc
+      - gcc-c++
+      - ksh
+      - make
+      - glibc
+      - glibc-devel
+      - libaio
+      - libaio-devel
+
+- name: Copy Oracle BI distribution to host
+  include: "{{ role_path }}/../silpion.lib/tasks/copy.yml"
+  with_items: "{{ oracle_bi_archives }}"
+  vars:
+    filename: "{{ item }}"
+
+- name: Check if {{ oracle_bi_inventory_loc }} file exists
+  stat:
+    path: "{{ oracle_bi_inventory_loc }}"
+  register: _obi_orainst_loc
+
+- name: Create Oracle Inventory Location if it not exists
+  when: _obi_orainst_loc.stat.exists == false
+  template:
+    src: ora_inst.loc.j2
+    dest: "{{ oracle_bi_inventory_loc }}"
+    owner: "{{ oracle_bi_user }}"
+    group: "{{ oracle_bi_group }}"
+    mode: 0644
+
+# FIXME: Use some Ansible functions
+- name: Get Oracle install group from Oracle Inventory Location if it exists
+  when: _obi_orainst_loc.stat.exists == true
+  command: sed -ne 's/^inst_group=\(.\+\)$/\1/p' {{ oracle_bi_inventory_loc }}
+  register: _obi_group_new
+
+- debug:
+    msg: "System defined Oracle install group: {{ _obi_group_new.stdout }}"
+  when: _obi_group_new.stdout is defined
+
+- set_fact:
+    oracle_bi_group: _obi_group_new.stdout
+  when: _obi_group_new.stdout is defined and _obi_group_new.stdout != oracle_bi_group
+
+- name: Check whether there's '{{ oracle_bi_user }}' user
+  shell: /usr/bin/getent passwd {{ oracle_bi_user }} | /usr/bin/wc -l | tr -d ''
+  register: _obi_user_exist
+
+- name: Check whether there's '{{ oracle_bi_group }}' group
+  shell: /usr/bin/getent group {{ oracle_bi_group }} | /usr/bin/wc -l | tr -d ''
+  register: _obi_group_exist
+
+- name: Create '{{ oracle_bi_group }}' group
+  when: _obi_group_exist.stdout == 0
+  group:
+    name: "{{ oracle_bi_group }}"
+    state: present
+
+- name: Create '{{ oracle_bi_user }}' user
+  when: _obi_user_exist.stdout == 0
+  user:
+    name: "{{ oracle_bi_user }}"
+    group: "{{ oracle_bi_group }}"
+
+- name: Create temporary directory for installation files
+  file:
+    path: "{{ oracle_bi_tmp }}"
+    state: directory
+    owner: "{{ oracle_bi_user }}"
+    group: "{{ oracle_bi_group }}"
+    mode: 0755
+
+- name: Extract Oracle BI installation files
+  become_user: "{{ oracle_bi_user }}"
+  become: true
+  with_indexed_items: "{{ oracle_bi_archives }}"
+  unarchive:
+    src: "{{ lib_persistent_data_path_remote }}/{{ item.1 }}"
+    dest: "{{ oracle_bi_tmp }}"
+    remote_src: true
+    owner: "{{ oracle_bi_user }}"
+    group: "{{ oracle_bi_group }}"
+    #FIXME: check for various version: creates: "{{ oracle_bi_tmp }}/bishiphome/Disk{{ item.0|int + 1 }}"
+
