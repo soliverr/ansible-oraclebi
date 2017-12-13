@@ -1,26 +1,50 @@
 ---
 # tasks file for ansible-weblogic
 
+- debug:
+    msg: "Create and configure {{ oracle_bi_instance }}"
+
 - set_fact:
     _bi_dir: "bi{{ oracle_bi_version }}"
   tags:
     - oracle-bi
+    - oracle-bi-install
+    - oracle-bi-domain
+    - oracle-bi-cluster
 
 - name: Include Oracle BI version specific vars
   tags:
     - oracle-bi
+    - oracle-bi-install
+    - oracle-bi-domain
+    - oracle-bi-cluster
   include_vars: "{{ _bi_dir }}/bi.yml"
 
 - include: validate.yml
   tags:
     - oracle-bi
+    - oracle-bi-install
+    - oracle-bi-domain
+    - oracle-bi-cluster
   when: not oracle_bi_already_installed
 
 - include: prepare.yml
   tags:
     - oracle-bi
+    - oracle-bi-install
   become: yes
   when: not oracle_bi_already_installed
+
+- name: Calculate create or scaleout installation mode for BI System cluster
+  set_fact:
+    oracle_bi_system: scaleout
+  when: play_hosts|count() > 1 and ansible_fqdn != oracle_bi_domain_host and oracle_bi_system|lower != 'scaleout'
+  tags:
+    - oracle-bi
+    - oracle-bi-install
+
+- debug:
+    msg: "Oracle BI System installation mode is '{{ oracle_bi_system }}'"
 
 #
 # Installation process
@@ -28,6 +52,7 @@
 - name: Create Oracle Middleware directory
   tags:
     - oracle-bi
+    - oracle-bi-install
   file:
     path: "{{ oracle_bi_bea_home }}"
     state: directory
@@ -38,6 +63,8 @@
 - name: Install Fussion Middleware Infrastructure
   tags:
     - oracle-bi
+    - oracle-bi-install
+  when: oracle_bi_version == "12c"
   include_role:
     name: ansible-weblogic
   vars:
@@ -48,6 +75,7 @@
 - include: install.yml
   tags:
     - oracle-bi
+    - oracle-bi-install
   static: yes
   become: yes
   become_user: "{{ oracle_bi_user }}"
@@ -60,6 +88,7 @@
 - name: Fix-up user and group for Oracle Middleware directory
   tags:
     - oracle-bi
+    - oracle-bi-install
   file:
     path: "{{ oracle_bi_home }}"
     state: directory
@@ -71,10 +100,12 @@
     oracle_bi_already_installed: true
   tags:
     - oracle-bi
+    - oracle-bi-install
 
 - include: ldconfig.yml
   tags:
     - oracle-bi
+    - oracle-bi-install
   static: yes
   become: yes
   when: oracle_bi_already_installed
@@ -91,14 +122,69 @@
   become_user: "{{ oracle_bi_user }}"
   when: oracle_bi_already_installed and oracle_bi_domain is defined and not oracle_bi_already_configured and not oracle_bi_install_only
 
-
-
 #
 # Set up start up system script for domains
 #
-- include: system-services.yml
+- name: Install Oracle BI sysvinit environment files
+  become: true
+  when: oracle_bi_already_installed and oracle_bi_sysinit
+  template:
+    src: service-envfile.j2
+    dest: "{{ oracle_bi_sysconfig_dir }}/bi-{{ oracle_bi_domain|replace( '_', '-') }}"
+    backup: yes
+    owner: "{{ oracle_bi_user }}"
+    group: "{{ oracle_bi_group }}"
+    mode: 0644
+
+- name: Remove Oracle BI sysvinit environment files
+  when: oracle_bi_already_installed and not oracle_bi_sysinit
+  file:
+    path: "{{ oracle_bi_sysconfig_dir }}/bi-{{ oracle_bi_domain|replace( '_', '-') }}"
+    state: absent
+
+- include: system-services-12c.yml
   tags:
     - oracle-bi
     - oracle-bi-domain
   static: yes
-  when: oracle_bi_already_installed and oracle_bi_sysinit
+  when: oracle_bi_already_installed and oracle_bi_sysinit and oracle_bi_version == '12c'
+
+- include: system-services-11g.yml
+  tags:
+    - oracle-bi
+    - oracle-bi-domain
+  static: yes
+  when: oracle_bi_already_installed and oracle_bi_sysinit and oracle_bi_version == '11g'
+
+#
+# Set up cluster configuration
+#
+- include: set-shared-repository.yml
+  tags:
+    - oracle-bi
+    - oracle-bi-cluster
+  static: yes
+  when: oracle_bi_already_installed and oracle_bi_shared_directory is defined and oracle_bi_version == '11g'
+
+- include: set-shared-obip.yml
+  tags:
+    - oracle-bi
+    - oracle-bi-cluster
+  static: yes
+  when: oracle_bi_already_installed and oracle_bi_shared_directory is defined and oracle_bi_version == '11g'
+
+- include: set-shared-obip-repository.yml
+  tags:
+    - oracle-bi
+    - oracle-bi-cluster
+  static: yes
+  when: oracle_bi_already_installed and oracle_bi_shared_directory is defined and oracle_bi_version == '11g'
+
+
+- include: set-global-cache.yml
+  tags:
+    - oracle-bi
+    - oracle-bi-cluster
+  static: yes
+  when: oracle_bi_already_installed and oracle_bi_shared_directory is defined and oracle_bi_version == '11g'
+

@@ -1,0 +1,35 @@
+---
+#
+# Setup Oracle BI Global Cache
+#
+- set_fact:
+    _obip_cache_path: "{{ oracle_bi_shared_directory }}/{{ oracle_bi_domain }}/bicache"
+
+- name: Create catalog directory
+  file:
+    path: "{{ _obip_cache_path }}"
+    state: directory
+    owner: "{{ oracle_bi_user }}"
+    group: "{{ oracle_bi_group }}"
+    mode: 0775
+
+- name: Set up Oracle BI Global Cache path
+  lineinfile:
+    path: "{{ oracle_bi_domain_base }}/{{ oracle_bi_domain }}/config/fmwconfig/biee-domain.xml"
+    regexp: '^(\s+)(<PerformanceOptions.*globalCacheStoragePath=)""(.*)'
+    line: '\1\2"{{ _obip_cache_path }}"\3'
+    backrefs: yes
+    backup: yes
+    state: present
+
+- name: Set up Oracle BI Global Cache size
+  lineinfile:
+    path: "{{ oracle_bi_domain_base }}/{{ oracle_bi_domain }}/config/fmwconfig/biee-domain.xml"
+    regexp: '^(\s+)(<PerformanceOptions.*globalCacheStorageSize=)"0"(.*)'
+    line: '\1\2"{{ oracle_bi_global_cache_size }}"\3'
+    backrefs: yes
+    backup: yes
+    state: present
+
+
+# FIXME: Fixup permissions on backuped files

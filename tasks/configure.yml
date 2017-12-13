@@ -1,24 +1,22 @@
 ---
 
 - name: Prepare response file for silent mode configuration
-  tags:
-    - oracle-bi
-    - oracle-bi-domain
+  when: not oracle_bi_install_and_cofigure
   template:
     src: "{{ oracle_bi_config_response_template }}"
     dest: "{{ oracle_bi_config_response_file }}"
 
 - set_fact:
     _bi_configure: "{{ oracle_bi_home }}/bin/config.sh {{ oracle_bi_installer_options }} -silent -responseFile {{ oracle_bi_config_response_file }} -invPtrLoc {{ oracle_bi_inventory_loc }}"
-  tags:
-    - oracle-bi
-    - oracle-bi-domain
-  when: oracle_bi_version == '12c'
+  when: oracle_bi_version == '12c' and not oracle_bi_install_and_cofigure
+
+- set_fact:
+    _bi_configure: "{{ oracle_bi_home }}/bin/config.sh {{ oracle_bi_installer_options }} -silent -responseFile {{ oracle_bi_config_response_file }} -invPtrLoc {{ oracle_bi_inventory_loc }} -waitforcompletion"
+  when: oracle_bi_version == '11g' and not oracle_bi_install_and_cofigure
+
 
 - name: Configure Oracle BI {{ oracle_bi_version }} in silent mode
-  tags:
-    - oracle-bi
-    - oracle-bi-domain
+  when: _bi_configure is defined
   shell: "{{ _bi_configure }}"
   args:
     creates: "{{ oracle_bi_bea_home }}/user_projects/domains/{{ oracle_bi_domain }}"

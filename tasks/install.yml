@@ -1,21 +1,53 @@
 ---
 #
-- name: Prepare configuration for silent mode installation
+
+- name: Install Fussion Middleware Infrastructure
   tags:
     - oracle-bi
+    - oracle-bi-install
+  when: oracle_bi_version == "12c"
+  include_role:
+    name: ansible-weblogic
+  vars:
+    oracle_weblogic_version: "{{ oracle_bi_version }}"
+    oracle_weblogic_install_type: 'Fusion Middleware Infrastructure'
+    oracle_weblogic_bea_home: "{{ oracle_bi_bea_home }}"
+
+- name: Create repository with RCU
+  tags:
+    - oracle-bi
+    - oracle-bi-install
+  when: oracle_bi_version == "11g" and ansible_fqdn == oracle_bi_domain_host
+  include_role:
+    name: ansible-oraclercu
+  vars:
+    oracle_rcu_db_connect: "{{ oracle_bi_db_connect }}"
+    oracle_rcu_db_user: "{{ oracle_bi_db_user }}"
+    oracle_rcu_db_password: "{{ oracle_bi_db_password }}"
+    oracle_rcu_components:
+      - schema_prefix: "{{ oracle_bi_schema_prefix }}"
+        tablespace: "{{ oracle_bi_tablespace }}"
+        temptablespace: "{{ oracle_bi_temptablespace }}"
+        components:
+          - name: BIPLATFORM
+            password: "{{ oracle_bi_password_biplatform | default( oracle_bi_schema_password ) }}"
+          - name: MDS
+            password: "{{ oracle_bi_password_mds | default( oracle_bi_schema_password ) }}"
+
+- name: Prepare configuration for silent mode installation
   template:
     src: "{{ oracle_bi_response_template }}"
     dest: "{{ oracle_bi_response_file }}"
 
 - set_fact:
     _bi_install: "{{ oracle_bi_home }}/bin/config.sh {{ oracle_bi_installer_options }} -silent -responseFile {{ oracle_bi_response_file }} -invPtrLoc {{ oracle_bi_inventory_loc }} -printtime"
-  when: oracle_bi_version == "12c"
-  tags:
-    - oracle-bi
+  when: oracle_bi_version == '12c'
+
+- set_fact:
+    _bi_install: "{{ oracle_bi_tmp }}/bishiphome/Disk1/runInstaller {{ oracle_bi_installer_options }} -silent -responseFile {{ oracle_bi_response_file }} -invPtrLoc {{ oracle_bi_inventory_loc }} -waitforcompletion -printtime"
+  when: oracle_bi_version == '11g'
 
 - name: Install Oracle BI {{ oracle_bi_version }} in silent mode
-  tags:
-    - oracle-bi
   shell: "{{ _bi_install  }}"
   args:
     creates: "{{ oracle_bi_home }}"

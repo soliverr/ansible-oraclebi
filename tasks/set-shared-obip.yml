@@ -1,0 +1,31 @@
+---
+#
+# Setup Oracle BI Presentation Serever catalog
+#
+- set_fact:
+    _obip_catalog_path: "{{ oracle_bi_shared_directory }}/{{ oracle_bi_domain }}/obip/catalog"
+
+- name: Create catalog directory
+  file:
+    path: "{{ _obip_catalog_path }}"
+    state: directory
+    owner: "{{ oracle_bi_user }}"
+    group: "{{ oracle_bi_group }}"
+    mode: 0775
+
+# FIXME: check for source catalog
+- name: Copy catalog to shared directory
+  command: cp -apr {{ oracle_bi_instance_base }}/{{ oracle_bi_instance }}/bifoundation/OracleBIPresentationServicesComponent/coreapplication_obips1/catalog/SampleAppLite {{ _obip_catalog_path }}
+  args:
+    creates: "{{ _obip_catalog_path }}/SampleAppLite/root"
+
+- name: Set up Oracle BI Presentation Server catalog
+  lineinfile:
+    path: "{{ oracle_bi_domain_base }}/{{ oracle_bi_domain }}/config/fmwconfig/biee-domain.xml"
+    regexp: '^(\s+)(<PresentationServerOptions\s+webCatalogLocation=")\$ORACLE_INSTANCE/bifoundation/OracleBIPresentationServicesComponent/\$COMPONENT_NAME/catalog(/SampleAppLite"/>.*)'
+    line: '\1\2{{ _obip_catalog_path }}\3'
+    backrefs: yes
+    backup: yes
+    state: present
+
+# FIXME: Fixup permissions on backuped files

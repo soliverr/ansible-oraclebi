@@ -89,6 +89,7 @@
 - name: Extract Oracle BI installation files
   become_user: "{{ oracle_bi_user }}"
   become: true
+  when: oracle_bi_version == '11g'
   with_indexed_items: "{{ oracle_bi_archives }}"
   unarchive:
     src: "{{ lib_persistent_data_path_remote }}/{{ item.1 }}"
@@ -96,5 +97,17 @@
     remote_src: true
     owner: "{{ oracle_bi_user }}"
     group: "{{ oracle_bi_group }}"
-    #FIXME: check for various version: creates: "{{ oracle_bi_tmp }}/bishiphome/Disk{{ item.0|int + 1 }}"
+    creates: "{{ oracle_bi_tmp }}/bishiphome/Disk{{ item.0|int+1 }}"
+
+- name: Extract Oracle BI installation files
+  become_user: "{{ oracle_bi_user }}"
+  become: true
+  when: oracle_bi_version == '12c'
+  with_indexed_items: "{{ oracle_bi_archives }}"
+  unarchive:
+    src: "{{ lib_persistent_data_path_remote }}/{{ item.1 }}"
+    dest: "{{ oracle_bi_tmp }}"
+    remote_src: true
+    owner: "{{ oracle_bi_user }}"
+    group: "{{ oracle_bi_group }}"
 

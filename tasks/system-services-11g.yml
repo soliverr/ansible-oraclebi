@@ -1,0 +1,45 @@
+---
+# Deploy system services to start Oracle WebLogic server
+
+- name: Install Oracle BI startup script
+  become: true
+  when: oracle_bi_already_installed and oracle_bi_sysinit
+  template:
+    src: "{{ _bi_dir }}/opmnctl.j2"
+    dest: "{{ oracle_bi_service_dir }}/{{ oracle_bi_domain|replace( '_', '-') }}-opmn"
+    backup: yes
+    owner: 0
+    group: 0
+    mode: 0755
+
+- name: Remove Oracle BI startup script
+  become: true
+  when: oracle_bi_already_installed and not oracle_bi_sysinit
+  file:
+    path: "{{ oracle_bi_service_dir }}/{{ oracle_bi_domain|replace( '_', '-') }}-opmn"
+    state: absent
+
+- name: Prepare Oracle Weblogic variables
+  include_role:
+    name: ansible-weblogic
+    tasks_from: validate
+  vars:
+    oracle_weblogic_version: "{{ oracle_bi_version }}"
+    oracle_weblogic_wls_home: "{{ oracle_bi_wls_home }}"
+    oracle_weblogic_AdminServer_Password: "{{ oracle_bi_admin_password }}"
+    oracle_weblogic_nodemanager_port: "{{ oracle_bi_nodemanager_port }}"
+    oracle_weblogic_domains:
+      - domain_name: "{{ oracle_bi_domain }}"
+
+- name: Set up Administration Weblogic server
+  include_role:
+    name: ansible-weblogic
+    tasks_from: configure-adminserver
+  vars:
+    oracle_weblogic_AdminServer_Password: "{{ oracle_bi_admin_password }}"
+
+- name: Set up system Oracle Weblogic startup scripts
+  include_role:
+    name: ansible-weblogic
+    tasks_from: system-services
+

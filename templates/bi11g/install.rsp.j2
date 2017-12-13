@@ -18,16 +18,16 @@ SOFTWARE_UPDATES_DOWNLOAD_LOCATION=
 INSTALL_FOR_DEVELOPMENT_TYPE=false
 
 #Install and Configure Software Components and Applications. Installs binaries in an ORACLE_HOME and configures working instances in an INSTANCE_HOME.
-INSTALL_AND_CONFIGURE_TYPE=true
+INSTALL_AND_CONFIGURE_TYPE={{ 'true' if oracle_bi_install_and_configure else 'false' }}
 
 #Install Software Components and Applications. Installs binaries in an ORACLE_HOME, but do not configure working instances of installed components.
-INSTALL_AND_CONFIGURE_LATER_TYPE=false
+INSTALL_AND_CONFIGURE_LATER_TYPE={{ 'false' if oracle_bi_install_and_configure else 'true' }}
 
 #Set this to true if you want to create a new BI System, all other required variables need to be provided. If this is set to true then variables "SCALEOUT_BISYSTEM" and "EXTEND_BISYSTEM" must be set to false, since the variables are mutually exclusive.
-CREATE_BISYSTEM=true
+CREATE_BISYSTEM={{ 'true' if oracle_bi_system|lower == 'create' else 'false' }}
 
 #Set this to true if you want to scale out an existing BI System, all other required variables need to be provided. If this is set to true then variables "CREATE_BISYSTEM","EXTEND_BISYSTEM" and "UPDATE_BIDOMAIN" must be set to false, since the variables are mutually exclusive. In order to scale out an existing BI system, the domain in the system must be running
-SCALEOUT_BISYSTEM=false
+SCALEOUT_BISYSTEM={{ 'true' if oracle_bi_system|lower == 'scaleout' else 'false' }}
 
 #Set this to true if you want to configure BI System in an existing exmpty domain in the localhost, all other required variables need to be provided. If this is set to true then variables "CREATE_BISYSTEM","SCALEOUT_BISYSTEM" and "UPDATE_BIDOMAIN" must be set to false, since the variables are mutually exclusive.
 EXTEND_BISYSTEM=false
@@ -62,6 +62,9 @@ WLS_SINGLE_SERVER_INSTALL=false
 #Write the complete path to a valid Middleware Home.
 MW_HOME={{ oracle_bi_bea_home }}
 
+#Application Server choices are WLS, WAS
+APPSERVER_TYPE=WLS
+
 #Give the complete path to a valid WebLogic Server Home.
 WEBLOGIC_HOME={{ oracle_bi_wls_home }}
 
@@ -69,16 +72,19 @@ WEBLOGIC_HOME={{ oracle_bi_wls_home }}
 ORACLE_HOME={{ oracle_bi_home }}
 
 #Give the complete path for an Oracle Instance directory to be created. This is the location where the software configuration files and runtime processes will reside.
-INSTANCE_HOME={{ oracle_bi_home }}/instances/{{ oracle_bi_instance }}
+INSTANCE_HOME={{ oracle_bi_instance_base }}/{{ oracle_bi_instance }}
 
 #Give a name for Oracle Instance corresponding to the Instance Home. The Oracle Instance name may only contain alphanumeric and underscore (_) characters, it must begin with an alphabetic (a-z or A-Z) character, and must be from 4 to 30 characters in length.
 INSTANCE_NAME={{ oracle_bi_instance }}
 
 #Give the complete path for a domain home to be created.
-DOMAIN_HOME_PATH={{ oracle_bi_bea_home }}/user_projects/domains/{{ oracle_bi_domain }}
+DOMAIN_HOME_PATH={{ oracle_bi_domain_base }}/{{ oracle_bi_domain }}
+
+#Give the complete path for JEE applications directory to be created.
+APPLICATIONS_HOME_PATH={{ oracle_bi_application_base }}/{{ oracle_bi_domain }}
 
 #Format: hostname:port:servicename. For Application Cluster Database: host1:port1^host2:port2@servicename
-DATABASE_CONNECTION_STRING_BI={{ oracle_bi_db_host }}:1521:{{ oracle_bi_db_service }}
+DATABASE_CONNECTION_STRING_BI={{ oracle_bi_db_connect }}
 
 #Enter the BIPLATFORM schema username.
 DATABASE_SCHEMA_USER_NAME_BI={{ oracle_bi_schema_prefix }}_BIPLATFORM
@@ -90,7 +96,7 @@ DATABASE_SCHEMA_PASSWORD_BI={{ oracle_bi_password_biplatform }}
 DATABASE_TYPE_BI=Oracle Database
 
 #Format: hostname:port:servicename. For Application Cluster Database: host1:port1^host2:port2@servicename
-DATABASE_CONNECTION_STRING_MDS={{ oracle_bi_db_host }}:1521:{{ oracle_bi_db_service }}
+DATABASE_CONNECTION_STRING_MDS={{ oracle_bi_db_connect }}
 
 #Enter the MDS schema username.
 DATABASE_SCHEMA_USER_NAME_MDS={{ oracle_bi_schema_prefix }}_MDS

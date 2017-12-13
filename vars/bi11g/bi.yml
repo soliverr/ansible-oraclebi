@@ -11,8 +11,22 @@ oracle_bi_archives:
  - obi_LINUXX64_11.1.1.9.0_disk5of5.zip
 
 # Configuration for silent installation mode
+oracle_bi_response_template: "{{ role_path }}/templates/bi11g/install.rsp.j2"
 oracle_bi_response_file: "{{ oracle_bi_tmp }}/silent.rsp"
 
 # Default installers' build-in location for WebLogic server Home
 oracle_bi_wls_home: "{{ oracle_bi_bea_home }}/wlserver"
+
+# Default NodeManager port for OBIEE 11g
+oracle_bi_nodemanager_port: 9556
+
+# Default Domain Port
+oracle_bi_port_start: 7001
+oracle_bi_domain_port: "{{ oracle_bi_port_start }}"
+
+# Separate installation from configuration or not
+#
+# Seems there is bug in 11g configurator: it can't restart NodeManager after new domain added
+# That's why configuration procees halted on creating bi_server1 step.
+oracle_bi_install_and_configure: true
 

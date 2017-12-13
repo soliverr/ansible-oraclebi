@@ -1,0 +1,30 @@
+---
+#
+# Setup Oracle BI Presentation Serever repository
+#
+- set_fact:
+    _obip_repository_path: "{{ oracle_bi_shared_directory }}/{{ oracle_bi_domain }}/obip"
+
+- name: Create catalog directory
+  file:
+    path: "{{ _obip_repository_path }}"
+    state: directory
+    owner: "{{ oracle_bi_user }}"
+    group: "{{ oracle_bi_group }}"
+    mode: 0775
+
+- name: Copy repository files to shared directory
+  command: cp -apr {{ oracle_bi_domain_base }}/{{ oracle_bi_domain }}/config/bipublisher/repository {{ _obip_repository_path }}
+  args:
+    creates: "{{ _obip_repository_path }}/repository/Admin"
+
+- name: Set up Oracle BI Presentation Server repository
+  lineinfile:
+    path: "{{ oracle_bi_domain_base }}/{{ oracle_bi_domain }}/config/bipublisher/xmlp-server-config.xml"
+    regexp: '^(\s+)(<file path=")\${xdo.server.config.dir}(/repository"/>)$'
+    line: '\1\2{{ _obip_repository_path }}\3'
+    backrefs: yes
+    backup: yes
+    state: present
+
+# FIXME: Fixup permissions on backuped files

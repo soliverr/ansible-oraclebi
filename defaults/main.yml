@@ -5,6 +5,9 @@
 oracle_bi_user: oracle
 oracle_bi_group: oinstall
 
+# No cluster by default
+oracle_bi_domain_host: "{{ ansible_fqdn }}"
+
 # Default Oracle Weblogic Version to install
 oracle_bi_version: 12c
 
@@ -34,6 +37,11 @@ oracle_bi_home: "{{ oracle_bi_bea_home }}/bi"
 #  -  BI Platform Distribution with Samples
 oracle_bi_install_type: "BI Platform Distribution"
 
+# Default type of installation:
+#   - create
+#   - scaleout
+oracle_bi_system: create
+
 # Perform or not configure tasks
 oracle_bi_install_only: false
 
@@ -57,3 +65,5 @@ oracle_bi_db_user: "{{ oracle_rcu_db_user | default( 'sys' ) }}"
 oracle_bi_db_password: "{{ oracle_rcu_db_password | default( omit ) }}"
 oracle_bi_schema_prefix: "{{ oracle_rcu_schema_prefix | default( 'DEV' ) }}"
 oracle_bi_schema_password: "{{ oracle_rcu_schema_password | default( oracle_bi_admin_password ) }}"
+oracle_bi_tablespace: 'USERS'
+oracle_bi_temptablespace: 'TEMP'

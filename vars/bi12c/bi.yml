@@ -19,3 +19,6 @@ oracle_bi_installer: bi_platform-12.2.1.3.0_linux64.bin
 
 # Default installers' build-in location for WebLogic server Home
 oracle_bi_wls_home: "{{ oracle_bi_bea_home }}/wlserver"
+
+# Separate installation from configuration or not
+oracle_bi_install_and_configure: false

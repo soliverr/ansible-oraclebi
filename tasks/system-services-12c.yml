@@ -1,0 +1,20 @@
+---
+# Deploy system services to start Oracle WebLogic server
+
+- name: Install Oracle BI startup script
+  become: true
+  when: oracle_bi_already_installed and oracle_bi_sysinit
+  template:
+    src: "{{ _bi_dir }}/bi-sysvinit.j2"
+    dest: "{{ oracle_bi_service_dir }}/{{ oracle_bi_domain|replace( '_', '-') }}-bi"
+    backup: yes
+    owner: 0
+    group: 0
+    mode: 0755
+
+- name: Remove Oracle BI startup script
+  become: true
+  when: oracle_bi_already_installed and not oracle_bi_sysinit
+  file:
+    path: "{{ oracle_bi_service_dir }}/{{ oracle_bi_domain|replace( '_', '-') }}-bi"
+    state: absent

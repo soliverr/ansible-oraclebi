@@ -1,0 +1,25 @@
+---
+#
+# Setup Oracle BI Shared repository
+#
+- set_fact:
+    _obi_repository: "{{ oracle_bi_shared_directory }}/{{ oracle_bi_domain }}/repository"
+
+- name: Create repository directory
+  file:
+    path: "{{ _obi_repository }}"
+    state: directory
+    owner: "{{ oracle_bi_user }}"
+    group: "{{ oracle_bi_group }}"
+    mode: 0775
+
+- name: Set up Oracle BI Shared repository path in biee-domain.xml
+  lineinfile:
+    path: "{{ oracle_bi_domain_base }}/{{ oracle_bi_domain }}/config/fmwconfig/biee-domain.xml"
+    regexp: '^(\s+)(<ServerOptions repositoryName="SampleAppLite_BI0001" repositoryDataSourceName="Star")>$'
+    line: '\1\2 repositorySharedLocation="{{ _obi_repository }}">'
+    backrefs: yes
+    backup: yes
+    state: present
+
+# FIXME: Fixup permissions on backuped files

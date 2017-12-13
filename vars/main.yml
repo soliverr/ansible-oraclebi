@@ -24,3 +24,18 @@ oracle_bi_already_configured: false
 
 # Java binary
 oracle_bi_java: "{{ ansible_local.java.general.java_home|default('/usr') }}/bin/java"
+
+# Instances base directory
+oracle_bi_instance_base: "{{ oracle_bi_home }}/instances"
+
+# Domains base directory
+oracle_bi_domain_base: "{{ oracle_bi_bea_home }}/user_projects/domains"
+
+# Applications base directory
+oracle_bi_application_base: "{{ oracle_bi_bea_home }}/user_projects/applications"
+
+#
+# Clustering parameters
+#
+# Global cache size
+oracle_bi_global_cache_size: 10
