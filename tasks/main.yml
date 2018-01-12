@@ -165,6 +165,8 @@
     - oracle-bi-cluster
   static: yes
   when: oracle_bi_already_installed and oracle_bi_shared_directory is defined and oracle_bi_version == '11g'
+  become: yes
+  become_user: "{{ oracle_bi_user }}"
 
 - include: set-shared-obip.yml
   tags:
@@ -172,6 +174,8 @@
     - oracle-bi-cluster
   static: yes
   when: oracle_bi_already_installed and oracle_bi_shared_directory is defined and oracle_bi_version == '11g'
+  become: yes
+  become_user: "{{ oracle_bi_user }}"
 
 - include: set-shared-obip-repository.yml
   tags:
@@ -179,7 +183,8 @@
     - oracle-bi-cluster
   static: yes
   when: oracle_bi_already_installed and oracle_bi_shared_directory is defined and oracle_bi_version == '11g'
-
+  become: yes
+  become_user: "{{ oracle_bi_user }}"
 
 - include: set-global-cache.yml
   tags:
@@ -187,4 +192,5 @@
     - oracle-bi-cluster
   static: yes
   when: oracle_bi_already_installed and oracle_bi_shared_directory is defined and oracle_bi_version == '11g'
-
+  become: yes
+  become_user: "{{ oracle_bi_user }}"
